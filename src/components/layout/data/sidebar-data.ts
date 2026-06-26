@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   AudioWaveform,
   Command,
+  FolderTree,
   GalleryVerticalEnd,
 } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
@@ -66,6 +67,11 @@ export const sidebarData: SidebarData = {
           title: 'Apps',
           url: '/apps',
           icon: Package,
+        },
+        {
+          title: 'File Browser',
+          url: '/file-browser',
+          icon: FolderTree,
         },
         {
           title: 'Chats',
