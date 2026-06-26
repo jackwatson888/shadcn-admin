@@ -34,7 +34,6 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
     >
       <ExplorerToolbar
         breadcrumbs={browser.breadcrumbs}
-        viewMode={browser.viewMode}
         hasSelection={browser.hasSelection}
         canRename={browser.selectedItems.length === 1}
         canGoBack={browser.canGoBack}
@@ -46,7 +45,6 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         onUp={browser.goUp}
         onRefresh={browser.refresh}
         onNavigate={browser.navigateTo}
-        onViewModeChange={browser.setViewMode}
         onCut={browser.cutItems}
         onCopy={browser.copyItems}
         onPaste={browser.pasteItems}
@@ -84,7 +82,6 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         <main className='flex min-w-0 flex-1 flex-col'>
           <ExplorerContent
             items={browser.contents}
-            viewMode={browser.viewMode}
             selectedIds={browser.selectedIds}
             dropTargetId={browser.dropTargetId}
             renameTargetId={browser.renameTargetId}
@@ -108,7 +105,6 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
             onSelectAll={browser.selectAll}
             onNewFolder={browser.createFolder}
             onRefresh={browser.refresh}
-            onViewModeChange={browser.setViewMode}
             onProperties={(item) => browser.showProperties(item)}
             onDragStart={browser.handleDragStart}
             onDropOnFolder={handleDropOnFolder}

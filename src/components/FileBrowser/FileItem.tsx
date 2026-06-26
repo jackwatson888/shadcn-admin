@@ -7,11 +7,10 @@ import {
   formatModifiedDate,
   getFileTypeLabel,
 } from './utils'
-import { WIN_EXPLORER, type FileSystemItem, type ViewMode } from './types'
+import type { FileSystemItem } from './types'
 
 type FileItemProps = {
   item: FileSystemItem
-  viewMode: ViewMode
   isSelected: boolean
   isRenaming: boolean
   isDropTarget: boolean
@@ -35,7 +34,6 @@ type FileItemProps = {
 
 export function FileItem({
   item,
-  viewMode,
   isSelected,
   isRenaming,
   isDropTarget,
@@ -160,58 +158,6 @@ export function FileItem({
     ? 'ring-2 ring-[#0078d4] bg-[#cce8ff] dark:bg-[#4cc2ff]/20'
     : ''
 
-  if (viewMode === 'grid') {
-    return (
-      <ItemContextMenu {...menuProps}>
-        <div
-          data-file-item={item.id}
-          role='button'
-          tabIndex={0}
-          onClick={handleClick}
-          onMouseDown={handleMouseDown}
-          onDoubleClick={handleDoubleClick}
-          onContextMenu={handleContextMenu}
-          className={cn(
-            'flex w-[var(--explorer-grid-size)] flex-col items-center gap-1 rounded-sm border border-transparent p-2 text-center outline-none',
-            'cursor-default transition-colors duration-75',
-            !isSelected && !isRenaming && 'hover:bg-[#e5f3ff] dark:hover:bg-[#3a3a3a]',
-            isSelected && !isRenaming && 'border-[#0078d4]/50 bg-[#0078d4]/10',
-            isRenaming &&
-              'z-10 border-[#0078d4]/70 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.12)] dark:bg-white',
-            dropClass
-          )}
-          style={{ '--explorer-grid-size': `${WIN_EXPLORER.gridCellWidth}px` } as React.CSSProperties}
-          {...dragProps}
-        >
-          <FileIcon type={item.icon} size='lg' />
-          {isRenaming ? (
-            <InlineRenameField
-              item={item}
-              viewMode='grid'
-              onConfirm={onRenameConfirm}
-              onCancel={onRenameCancel}
-            />
-          ) : (
-            <span
-              onMouseDown={handleNameMouseDown}
-              onClick={handleNameClick}
-              className={cn(
-                'line-clamp-2 w-full rounded-[2px] px-1 py-0.5 text-[11px] leading-tight break-words',
-                isSelected && 'bg-[#0078d4] text-white dark:bg-[#4cc2ff]/40'
-              )}
-            >
-              {item.name}
-            </span>
-          )}
-        </div>
-      </ItemContextMenu>
-    )
-  }
-
-  const selectedClass = isSelected
-    ? 'bg-[#0078d4] text-white dark:bg-[#4cc2ff]/30 dark:text-white'
-    : 'hover:bg-[#e5f3ff] dark:hover:bg-[#3a3a3a]'
-
   return (
     <ItemContextMenu {...menuProps}>
       <div
@@ -223,10 +169,12 @@ export function FileItem({
         onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
         className={cn(
-          'grid h-[22px] w-full cursor-default grid-cols-[minmax(0,2.5fr)_minmax(0,1.5fr)_minmax(0,0.75fr)_minmax(0,1.25fr)] items-center gap-3 px-2 text-[12px] outline-none',
-          !isRenaming && selectedClass,
-          isRenaming && isSelected && 'bg-[#0078d4] text-white dark:bg-[#4cc2ff]/30',
-          isRenaming && !isSelected && 'bg-white dark:bg-[#2d2d2d]',
+          'relative grid h-8 w-full cursor-default grid-cols-[minmax(0,2.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.75fr)] items-center gap-3 px-3 text-[12px] outline-none',
+          !isRenaming && !isSelected && 'hover:bg-[#f5f5f5] dark:hover:bg-[#2d2d2d]',
+          isSelected &&
+            !isRenaming &&
+            'z-10 bg-[#e8f4fc] ring-1 ring-inset ring-[#0067c0] dark:bg-[#4cc2ff]/15 dark:ring-[#4cc2ff]',
+          isRenaming && 'bg-white dark:bg-[#2d2d2d]',
           dropClass
         )}
         {...dragProps}
@@ -236,7 +184,6 @@ export function FileItem({
           {isRenaming ? (
             <InlineRenameField
               item={item}
-              viewMode='list'
               onConfirm={onRenameConfirm}
               onCancel={onRenameCancel}
             />
@@ -250,14 +197,14 @@ export function FileItem({
             </span>
           )}
         </span>
-        <span className={cn('truncate', !isSelected && 'text-[#666] dark:text-[#aaa]')}>
+        <span className='truncate text-[#666] dark:text-[#aaa]'>
+          {formatModifiedDate(item.modified)}
+        </span>
+        <span className='truncate text-[#666] dark:text-[#aaa]'>
           {getFileTypeLabel(item)}
         </span>
-        <span className={cn(!isSelected && 'text-[#666] dark:text-[#aaa]')}>
+        <span className='text-[#666] dark:text-[#aaa]'>
           {formatFileSize(item.size)}
-        </span>
-        <span className={cn('truncate', !isSelected && 'text-[#666] dark:text-[#aaa]')}>
-          {formatModifiedDate(item.modified)}
         </span>
       </div>
     </ItemContextMenu>

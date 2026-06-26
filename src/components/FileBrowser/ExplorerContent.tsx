@@ -1,12 +1,11 @@
-import { FolderOpen } from 'lucide-react'
+import { ChevronUp } from 'lucide-react'
 import { AreaContextMenu } from './ExplorerContextMenu'
 import { FileItem } from './FileItem'
 import { SelectionSurface } from './SelectionSurface'
-import type { FileSystemItem, SelectionRect, ViewMode } from './types'
+import type { FileSystemItem, SelectionRect } from './types'
 
 type ExplorerContentProps = {
   items: FileSystemItem[]
-  viewMode: ViewMode
   selectedIds: Set<string>
   dropTargetId: string | null
   renameTargetId: string | null
@@ -26,7 +25,6 @@ type ExplorerContentProps = {
   onSelectAll: () => void
   onNewFolder: () => void
   onRefresh: () => void
-  onViewModeChange: (mode: ViewMode) => void
   onProperties: (item?: FileSystemItem) => void
   onDragStart: (item: FileSystemItem, event: React.DragEvent) => void
   onDropOnFolder: (folderId: string, event: React.DragEvent) => void
@@ -36,7 +34,6 @@ type ExplorerContentProps = {
 
 export function ExplorerContent({
   items,
-  viewMode,
   selectedIds,
   dropTargetId,
   renameTargetId,
@@ -56,7 +53,6 @@ export function ExplorerContent({
   onSelectAll,
   onNewFolder,
   onRefresh,
-  onViewModeChange,
   onProperties,
   onDragStart,
   onDropOnFolder,
@@ -65,12 +61,10 @@ export function ExplorerContent({
 }: ExplorerContentProps) {
   const areaMenuProps = {
     canPaste,
-    viewMode,
     onPaste,
     onNewFolder,
     onRefresh,
     onSelectAll,
-    onViewModeChange,
     onProperties,
   }
 
@@ -108,8 +102,7 @@ export function ExplorerContent({
           onClearSelection={onClearSelection}
           className='flex flex-col items-center justify-center p-8 text-center'
         >
-          <FolderOpen className='size-14 text-muted-foreground/40' />
-          <p className='mt-3 font-medium'>This folder is empty.</p>
+          <p className='font-medium'>This folder is empty.</p>
           <p className='text-sm text-muted-foreground'>
             Right-click for options • Drag items here
           </p>
@@ -119,44 +112,17 @@ export function ExplorerContent({
     )
   }
 
-  if (viewMode === 'grid') {
-    return (
-      <AreaContextMenu {...areaMenuProps}>
-        <SelectionSurface
-          onMarqueeComplete={onMarqueeComplete}
-          onClearSelection={onClearSelection}
-        >
-          <div
-            className='grid gap-0 p-2'
-            style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(96px, 1fr))`,
-            }}
-          >
-            {items.map((item) => (
-              <FileItem
-                key={item.id}
-                item={item}
-                viewMode={viewMode}
-                isSelected={selectedIds.has(item.id)}
-                isRenaming={renameTargetId === item.id}
-                isDropTarget={dropTargetId === item.id}
-                {...itemHandlers}
-              />
-            ))}
-          </div>
-        </SelectionSurface>
-      </AreaContextMenu>
-    )
-  }
-
   return (
     <AreaContextMenu {...areaMenuProps}>
       <div className='flex min-h-0 flex-1 flex-col bg-[#ffffff] dark:bg-[#1e1e1e]'>
-        <div className='grid grid-cols-[minmax(0,2.5fr)_minmax(0,1.5fr)_minmax(0,0.75fr)_minmax(0,1.25fr)] gap-3 border-b border-[#e5e5e5] bg-[#fafafa] px-2 py-1 text-[11px] font-normal text-[#666] dark:border-[#3a3a3a] dark:bg-[#2d2d2d] dark:text-[#aaa]'>
-          <span>Name</span>
+        <div className='grid grid-cols-[minmax(0,2.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.75fr)] gap-3 border-b border-[#e5e5e5] bg-[#fafafa] px-3 py-1.5 text-[11px] text-[#666] dark:border-[#3a3a3a] dark:bg-[#2d2d2d] dark:text-[#aaa]'>
+          <span className='flex items-center gap-1'>
+            Name
+            <ChevronUp className='size-3' aria-hidden='true' />
+          </span>
+          <span>Date modified</span>
           <span>Type</span>
           <span>Size</span>
-          <span>Date modified</span>
         </div>
         <SelectionSurface
           onMarqueeComplete={onMarqueeComplete}
@@ -167,7 +133,6 @@ export function ExplorerContent({
               <FileItem
                 key={item.id}
                 item={item}
-                viewMode={viewMode}
                 isSelected={selectedIds.has(item.id)}
                 isRenaming={renameTargetId === item.id}
                 isDropTarget={dropTargetId === item.id}

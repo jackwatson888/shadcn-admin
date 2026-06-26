@@ -16,7 +16,7 @@ export function formatFileSize(bytes?: number): string {
 }
 
 export function formatModifiedDate(date: Date): string {
-  return format(date, 'MMM d, yyyy h:mm a')
+  return format(date, 'M/d/yyyy h:mm a')
 }
 
 export function getFileIconFromExtension(extension: string): FileIconType {

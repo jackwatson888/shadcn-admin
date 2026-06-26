@@ -20,7 +20,7 @@ import {
   pathsEqual,
   resolveActionTargets,
 } from './utils'
-import type { ClipboardEntry, FileSystemItem, ViewMode } from './types'
+import type { ClipboardEntry, FileSystemItem } from './types'
 
 type UseFileBrowserOptions = {
   root: FileSystemItem
@@ -35,7 +35,6 @@ type NavigationHistory = {
 export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions) {
   const [fileTree, setFileTree] = useState<FileSystemItem>(() => cloneFileTree(root))
   const [currentPath, setCurrentPath] = useState<string[]>(initialPath)
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(['desktop', ...initialPath])
   )
@@ -480,7 +479,6 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     selectedItems: selection.selectedItems,
     hasSelection: selection.hasSelection,
     isAllSelected: selection.isAllSelected,
-    viewMode,
     expandedIds,
     clipboard,
     renameTargetId,
@@ -502,7 +500,6 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     openItem,
     toggleExpand,
     navigateToTreeFolder: navigateTo,
-    setViewMode,
     cutItems,
     copyItems,
     pasteItems,

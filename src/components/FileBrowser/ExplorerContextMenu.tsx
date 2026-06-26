@@ -5,8 +5,6 @@ import {
   FolderOpen,
   FolderPlus,
   Info,
-  LayoutGrid,
-  List,
   Pencil,
   RefreshCw,
   Scissors,
@@ -23,7 +21,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
-import type { FileSystemItem, ViewMode } from './types'
+import type { FileSystemItem } from './types'
 
 type ItemContextMenuProps = {
   item: FileSystemItem
@@ -107,25 +105,21 @@ export function ItemContextMenu({
 
 type AreaContextMenuProps = {
   canPaste: boolean
-  viewMode: ViewMode
   children: React.ReactNode
   onPaste: () => void
   onNewFolder: () => void
   onRefresh: () => void
   onSelectAll: () => void
-  onViewModeChange: (mode: ViewMode) => void
   onProperties: (item?: FileSystemItem) => void
 }
 
 export function AreaContextMenu({
   canPaste,
-  viewMode,
   children,
   onPaste,
   onNewFolder,
   onRefresh,
   onSelectAll,
-  onViewModeChange,
   onProperties,
 }: AreaContextMenuProps) {
   return (
@@ -151,22 +145,6 @@ export function AreaContextMenu({
             <ContextMenuItem disabled>
               <FilePlus2 />
               Shortcut
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-        <ContextMenuSeparator />
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>View</ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onSelect={() => onViewModeChange('grid')}>
-              <LayoutGrid />
-              Extra large icons
-              {viewMode === 'grid' ? ' ✓' : ''}
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onViewModeChange('list')}>
-              <List />
-              Details
-              {viewMode === 'list' ? ' ✓' : ''}
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>

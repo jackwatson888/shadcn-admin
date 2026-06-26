@@ -1,10 +1,6 @@
 import { ChevronRight, Folder } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { pathsEqual } from './utils'
 import type { FileSystemItem } from './types'
 
 type FolderTreeProps = {
@@ -48,14 +44,12 @@ function FolderTreeNode({
 }: FolderTreeNodeProps) {
   if (item.type !== 'folder') return null
 
-  const folders =
+  const childFolders =
     item.children?.filter((child) => child.type === 'folder') ?? []
   const isExpanded = expandedIds.has(item.id)
-  const isSelected =
-    currentPath.length === path.length &&
-    path.every((id, index) => currentPath[index] === id)
+  const isSelected = pathsEqual(currentPath, path)
   const isDropTarget = dropTargetId === item.id
-  const hasChildren = folders.length > 0
+  const hasChildFolders = childFolders.length > 0
 
   const dropHandlers = {
     onDragOver: (event: React.DragEvent) => {
@@ -70,79 +64,78 @@ function FolderTreeNode({
   }
 
   const rowClass = cn(
-    'flex w-full items-center gap-1.5 rounded-sm py-1 pe-2 text-start text-[12px] transition-colors duration-75',
+    'flex min-w-0 flex-1 items-center gap-1.5 rounded-sm py-1 pe-2 text-start text-[12px] transition-colors duration-75',
     'hover:bg-[#e5f3ff] dark:hover:bg-[#3a3a3a]',
     isSelected && 'bg-[#cce8ff] dark:bg-[#4cc2ff]/20',
     isDropTarget && 'bg-[#cce8ff] ring-1 ring-[#0078d4] dark:bg-[#4cc2ff]/25'
   )
 
-  const handleSelect = () => {
+  const handleNavigate = () => {
     onNavigate(path)
-    if (hasChildren && !isExpanded) {
+    if (hasChildFolders && !isExpanded) {
       onToggleExpand(item.id)
     }
   }
 
-  if (!hasChildren) {
-    return (
-      <button
-        type='button'
-        onClick={handleSelect}
-        style={{ paddingInlineStart: `${depth * 14 + 8}px` }}
-        className={rowClass}
-        {...dropHandlers}
-      >
-        <Folder className='size-4 shrink-0 text-amber-500' aria-hidden='true' />
-        <span className='truncate'>{item.name}</span>
-      </button>
-    )
+  const handleChevronClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    onToggleExpand(item.id)
   }
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={() => onToggleExpand(item.id)}>
+    <div
+      role='treeitem'
+      aria-expanded={hasChildFolders ? isExpanded : undefined}
+      aria-selected={isSelected}
+    >
       <div
         className='flex items-center'
-        style={{ paddingInlineStart: `${depth * 14 + 4}px` }}
+        style={{ paddingInlineStart: `${depth * 16 + 4}px` }}
         {...dropHandlers}
       >
-        <CollapsibleTrigger asChild>
+        {hasChildFolders ? (
           <button
             type='button'
+            onClick={handleChevronClick}
             className='flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-[#e5f3ff] dark:hover:bg-[#3a3a3a]'
             aria-label={isExpanded ? `Collapse ${item.name}` : `Expand ${item.name}`}
           >
             <ChevronRight
               className={cn(
-                'size-3.5 text-muted-foreground transition-transform duration-200',
+                'size-3.5 text-muted-foreground transition-transform duration-150',
                 isExpanded && 'rotate-90'
               )}
             />
           </button>
-        </CollapsibleTrigger>
-        <button type='button' onClick={handleSelect} className={cn(rowClass, 'flex-1')}>
+        ) : (
+          <span className='size-5 shrink-0' aria-hidden='true' />
+        )}
+        <button type='button' onClick={handleNavigate} className={rowClass}>
           <Folder className='size-4 shrink-0 text-amber-500' aria-hidden='true' />
           <span className='truncate'>{item.name}</span>
         </button>
       </div>
-      <CollapsibleContent className='CollapsibleContent'>
-        {folders.map((folder) => (
-          <FolderTreeNode
-            key={folder.id}
-            item={folder}
-            depth={depth + 1}
-            path={[...path, folder.id]}
-            currentPath={currentPath}
-            expandedIds={expandedIds}
-            dropTargetId={dropTargetId}
-            onToggleExpand={onToggleExpand}
-            onNavigate={onNavigate}
-            onFolderDragOver={onFolderDragOver}
-            onFolderDragLeave={onFolderDragLeave}
-            onFolderDrop={onFolderDrop}
-          />
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
+      {hasChildFolders && isExpanded && (
+        <div role='group'>
+          {childFolders.map((folder) => (
+            <FolderTreeNode
+              key={folder.id}
+              item={folder}
+              depth={depth + 1}
+              path={[...path, folder.id]}
+              currentPath={currentPath}
+              expandedIds={expandedIds}
+              dropTargetId={dropTargetId}
+              onToggleExpand={onToggleExpand}
+              onNavigate={onNavigate}
+              onFolderDragOver={onFolderDragOver}
+              onFolderDragLeave={onFolderDragLeave}
+              onFolderDrop={onFolderDrop}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

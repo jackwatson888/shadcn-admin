@@ -5,24 +5,20 @@ import {
   ClipboardPaste,
   Copy,
   FolderPlus,
-  LayoutGrid,
-  List,
   Pencil,
   RefreshCw,
   Scissors,
   Search,
   Trash2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Breadcrumb } from './Breadcrumb'
-import type { BreadcrumbSegment, ViewMode } from './types'
+import type { BreadcrumbSegment } from './types'
 
 type ExplorerToolbarProps = {
   breadcrumbs: BreadcrumbSegment[]
-  viewMode: ViewMode
   hasSelection: boolean
   canRename: boolean
   canGoBack: boolean
@@ -34,7 +30,6 @@ type ExplorerToolbarProps = {
   onUp: () => void
   onRefresh: () => void
   onNavigate: (path: string[]) => void
-  onViewModeChange: (mode: ViewMode) => void
   onCut: () => void
   onCopy: () => void
   onPaste: () => void
@@ -71,7 +66,6 @@ function NavButton({
 
 export function ExplorerToolbar({
   breadcrumbs,
-  viewMode,
   hasSelection,
   canRename,
   canGoBack,
@@ -83,7 +77,6 @@ export function ExplorerToolbar({
   onUp,
   onRefresh,
   onNavigate,
-  onViewModeChange,
   onCut,
   onCopy,
   onPaste,
@@ -200,37 +193,6 @@ export function ExplorerToolbar({
           <FolderPlus className='size-3.5' />
           New folder
         </Button>
-
-        <div className='ms-auto flex shrink-0 items-center rounded-md border bg-background p-0.5'>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className={cn(
-              'size-7 rounded-sm',
-              viewMode === 'grid' && 'bg-accent text-accent-foreground'
-            )}
-            onClick={() => onViewModeChange('grid')}
-            aria-label='Extra large icons'
-            aria-pressed={viewMode === 'grid'}
-          >
-            <LayoutGrid className='size-4' />
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className={cn(
-              'size-7 rounded-sm',
-              viewMode === 'list' && 'bg-accent text-accent-foreground'
-            )}
-            onClick={() => onViewModeChange('list')}
-            aria-label='Details'
-            aria-pressed={viewMode === 'list'}
-          >
-            <List className='size-4' />
-          </Button>
-        </div>
       </div>
     </div>
   )

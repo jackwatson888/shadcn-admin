@@ -5,7 +5,6 @@ import { WIN_EXPLORER, type FileSystemItem } from './types'
 
 type InlineRenameFieldProps = {
   item: FileSystemItem
-  viewMode: 'grid' | 'list'
   onConfirm: (name: string) => void
   onCancel: () => void
 }
@@ -18,7 +17,6 @@ function focusAndSelectInput(input: HTMLInputElement) {
 
 export function InlineRenameField({
   item,
-  viewMode,
   onConfirm,
   onCancel,
 }: InlineRenameFieldProps) {
@@ -100,23 +98,10 @@ export function InlineRenameField({
     }
   }
 
-  const inputClass = cn(
-    'w-full min-w-0 rounded-[2px] border bg-white text-black outline-none',
-    'border-[#0078d4] shadow-[0_0_0_1px_rgba(0,120,212,0.45)]',
-    'caret-black selection:bg-[#0078d4] selection:text-white',
-    'transition-shadow duration-150 focus:shadow-[0_0_0_2px_rgba(0,120,212,0.55)]',
-    viewMode === 'grid'
-      ? 'px-1 py-0.5 text-center text-[11px] leading-tight'
-      : 'h-[18px] px-1 text-[12px] leading-[18px]'
-  )
-
   return (
     <span
       data-rename-field
-      className={cn(
-        'inline-flex min-w-0 animate-in items-center fade-in-0 zoom-in-95 duration-150',
-        viewMode === 'grid' ? 'w-full justify-center px-0.5' : 'min-w-0 flex-1'
-      )}
+      className='inline-flex min-w-0 flex-1 animate-in items-center fade-in-0 zoom-in-95 duration-150'
       style={{ fontFamily: WIN_EXPLORER.font }}
       onClick={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
@@ -137,10 +122,15 @@ export function InlineRenameField({
         }}
         onMouseDown={(event) => event.stopPropagation()}
         onFocus={(event) => event.currentTarget.select()}
-        className={inputClass}
+        className={cn(
+          'h-[18px] w-full min-w-0 rounded-[2px] border bg-white px-1 text-[12px] leading-[18px] text-black outline-none',
+          'border-[#0078d4] shadow-[0_0_0_1px_rgba(0,120,212,0.45)]',
+          'caret-black selection:bg-[#0078d4] selection:text-white',
+          'transition-shadow duration-150 focus:shadow-[0_0_0_2px_rgba(0,120,212,0.55)]'
+        )}
         aria-label={`Rename ${item.name}`}
       />
-      {extension && viewMode === 'list' && (
+      {extension && (
         <span className='ms-0.5 shrink-0 text-[12px] text-[#666] dark:text-[#aaa]'>
           .{extension}
         </span>
