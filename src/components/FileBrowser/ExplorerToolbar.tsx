@@ -24,6 +24,7 @@ type ExplorerToolbarProps = {
   breadcrumbs: BreadcrumbSegment[]
   viewMode: ViewMode
   hasSelection: boolean
+  canRename: boolean
   canGoBack: boolean
   canGoForward: boolean
   canGoUp: boolean
@@ -72,6 +73,7 @@ export function ExplorerToolbar({
   breadcrumbs,
   viewMode,
   hasSelection,
+  canRename,
   canGoBack,
   canGoForward,
   canGoUp,
@@ -171,8 +173,8 @@ export function ExplorerToolbar({
           variant='ghost'
           size='sm'
           className='h-7 gap-1.5 px-2 text-xs'
-          disabled={!hasSelection}
-          onClick={onRename}
+          disabled={!canRename}
+          onClick={() => onRename()}
         >
           <Pencil className='size-3.5' />
           Rename

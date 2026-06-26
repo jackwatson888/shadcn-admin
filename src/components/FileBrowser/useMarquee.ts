@@ -56,15 +56,16 @@ export function useMarquee({ onComplete, onStart }: UseMarqueeOptions) {
       setMarquee(next)
     }
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (event: MouseEvent) => {
       if (!dragState.current?.active || !containerRef.current) return
 
       const container = containerRef.current
       const finalMarquee = marqueeRef.current
+      const mouseupInside = container.contains(event.target as Node)
 
       if (finalMarquee && finalMarquee.width > 4 && finalMarquee.height > 4) {
         onComplete(finalMarquee, container)
-      } else {
+      } else if (mouseupInside) {
         onStart?.()
       }
 

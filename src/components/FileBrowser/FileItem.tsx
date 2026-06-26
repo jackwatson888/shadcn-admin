@@ -67,6 +67,17 @@ export function FileItem({
     event.stopPropagation()
   }
 
+  const handleNameMouseDown = (event: React.MouseEvent) => {
+    if (isRenaming) return
+    if (event.button !== 0) return
+    event.stopPropagation()
+
+    if (isSelected && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      event.preventDefault()
+      onRename(item)
+    }
+  }
+
   const handleNameClick = (event: React.MouseEvent) => {
     if (isRenaming) return
     event.stopPropagation()
@@ -74,7 +85,6 @@ export function FileItem({
     if (event.detail >= 2) return
 
     if (isSelected && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-      onRename(item)
       return
     }
 
@@ -166,7 +176,8 @@ export function FileItem({
             'cursor-default transition-colors duration-75',
             !isSelected && !isRenaming && 'hover:bg-[#e5f3ff] dark:hover:bg-[#3a3a3a]',
             isSelected && !isRenaming && 'border-[#0078d4]/50 bg-[#0078d4]/10',
-            isRenaming && 'border-[#0078d4] bg-white dark:bg-[#2d2d2d]',
+            isRenaming &&
+              'z-10 border-[#0078d4]/70 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.12)] dark:bg-white',
             dropClass
           )}
           style={{ '--explorer-grid-size': `${WIN_EXPLORER.gridCellWidth}px` } as React.CSSProperties}
@@ -182,6 +193,7 @@ export function FileItem({
             />
           ) : (
             <span
+              onMouseDown={handleNameMouseDown}
               onClick={handleNameClick}
               className={cn(
                 'line-clamp-2 w-full rounded-[2px] px-1 py-0.5 text-[11px] leading-tight break-words',
@@ -213,7 +225,8 @@ export function FileItem({
         className={cn(
           'grid h-[22px] w-full cursor-default grid-cols-[minmax(0,2.5fr)_minmax(0,1.5fr)_minmax(0,0.75fr)_minmax(0,1.25fr)] items-center gap-3 px-2 text-[12px] outline-none',
           !isRenaming && selectedClass,
-          isRenaming && 'bg-white dark:bg-[#2d2d2d]',
+          isRenaming && isSelected && 'bg-[#0078d4] text-white dark:bg-[#4cc2ff]/30',
+          isRenaming && !isSelected && 'bg-white dark:bg-[#2d2d2d]',
           dropClass
         )}
         {...dragProps}
@@ -228,7 +241,11 @@ export function FileItem({
               onCancel={onRenameCancel}
             />
           ) : (
-            <span className='truncate' onClick={handleNameClick}>
+            <span
+              className='truncate'
+              onMouseDown={handleNameMouseDown}
+              onClick={handleNameClick}
+            >
               {item.name}
             </span>
           )}

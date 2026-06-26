@@ -270,16 +270,27 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
 
   const startRename = useCallback(
     (item?: FileSystemItem) => {
-      const target = item ?? selectionRef.current.selectedItems[0]
-      if (!target) return
+      const selected = selectionRef.current.selectedItems
+      const target = item ?? selected[0]
 
-      if (!item && selectionRef.current.selectedItems.length > 1) {
+      if (!target) {
+        toast.error('Select an item to rename')
+        return
+      }
+
+      if (!item && selected.length > 1) {
         toast.error('Select only one item to rename')
         return
       }
 
       selection.setSelection([target.id])
       setRenameTargetId(target.id)
+
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(`[data-file-item="${target.id}"]`)
+          ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      })
     },
     [selection]
   )

@@ -36,6 +36,7 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         breadcrumbs={browser.breadcrumbs}
         viewMode={browser.viewMode}
         hasSelection={browser.hasSelection}
+        canRename={browser.selectedItems.length === 1}
         canGoBack={browser.canGoBack}
         canGoForward={browser.canGoForward}
         canGoUp={browser.canGoUp}
@@ -50,7 +51,10 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         onCopy={browser.copyItems}
         onPaste={browser.pasteItems}
         onDelete={browser.deleteItems}
-        onRename={browser.startRename}
+        onRename={() => {
+          const target = browser.selectedItems[0]
+          if (target) browser.startRename(target)
+        }}
         onNewFolder={browser.createFolder}
       />
 
