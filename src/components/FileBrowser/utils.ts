@@ -123,11 +123,22 @@ export function getNodeByPath(
   return current
 }
 
+export function compareByNameAsc(a: FileSystemItem, b: FileSystemItem): number {
+  return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+}
+
+export function getSortedFolderChildren(node: FileSystemItem): FileSystemItem[] {
+  if (node.type !== 'folder' || !node.children) return []
+  return node.children
+    .filter((child) => child.type === 'folder')
+    .sort(compareByNameAsc)
+}
+
 export function getFolderContents(node: FileSystemItem): FileSystemItem[] {
   if (node.type !== 'folder' || !node.children) return []
   return [...node.children].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    return compareByNameAsc(a, b)
   })
 }
 

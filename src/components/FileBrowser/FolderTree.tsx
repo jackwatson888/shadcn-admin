@@ -1,6 +1,6 @@
 import { ChevronRight, Folder } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { pathsEqual } from './utils'
+import { getSortedFolderChildren, pathsEqual } from './utils'
 import type { FileSystemItem } from './types'
 
 type FolderTreeProps = {
@@ -44,8 +44,7 @@ function FolderTreeNode({
 }: FolderTreeNodeProps) {
   if (item.type !== 'folder') return null
 
-  const childFolders =
-    item.children?.filter((child) => child.type === 'folder') ?? []
+  const childFolders = getSortedFolderChildren(item)
   const isExpanded = expandedIds.has(item.id)
   const isSelected = pathsEqual(currentPath, path)
   const isDropTarget = dropTargetId === item.id
@@ -150,8 +149,7 @@ export function FolderTree({
   onFolderDragLeave,
   onFolderDrop,
 }: FolderTreeProps) {
-  const rootFolders =
-    root.children?.filter((child) => child.type === 'folder') ?? []
+  const rootFolders = getSortedFolderChildren(root)
 
   return (
     <div className='space-y-0.5' role='tree' aria-label='Folder navigation'>
