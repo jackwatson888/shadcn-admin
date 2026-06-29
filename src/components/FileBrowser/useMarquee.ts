@@ -20,7 +20,7 @@ export function useMarquee({ onComplete, onStart }: UseMarqueeOptions) {
     (event: React.MouseEvent) => {
       if (event.button !== 0) return
       if ((event.target as HTMLElement).closest('[data-file-item]')) return
-      if ((event.target as HTMLElement).closest('[data-rename-field]')) return
+      if ((event.target as HTMLElement).closest('[data-sort-header]')) return
 
       const container = containerRef.current
       if (!container) return

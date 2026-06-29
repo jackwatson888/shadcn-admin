@@ -35,11 +35,11 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
       <ExplorerToolbar
         breadcrumbs={browser.breadcrumbs}
         hasSelection={browser.hasSelection}
-        canRename={browser.selectedItems.length === 1}
         canGoBack={browser.canGoBack}
         canGoForward={browser.canGoForward}
         canGoUp={browser.canGoUp}
         canPaste={browser.canPaste}
+        sortState={browser.sortState}
         onBack={browser.goBack}
         onForward={browser.goForward}
         onUp={browser.goUp}
@@ -49,11 +49,9 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         onCopy={browser.copyItems}
         onPaste={browser.pasteItems}
         onDelete={browser.deleteItems}
-        onRename={() => {
-          const target = browser.selectedItems[0]
-          if (target) browser.startRename(target)
-        }}
         onNewFolder={browser.createFolder}
+        onSortChange={browser.toggleSort}
+        onSetSortDirection={browser.setSortDirection}
       />
 
       <div className='flex min-h-0 flex-1 border-t border-[#d1d1d1] dark:border-[#3a3a3a]'>
@@ -62,6 +60,7 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
           currentPath={browser.currentPath}
           expandedIds={browser.expandedIds}
           dropTargetId={browser.dropTargetId}
+          canPaste={browser.canPaste}
           onToggleExpand={browser.toggleExpand}
           onNavigate={browser.navigateToTreeFolder}
           onFolderDragOver={browser.setDropTargetId}
@@ -77,6 +76,12 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
               payload.sourceFolderPath
             )
           }}
+          onCutTreeItem={browser.cutTreeItem}
+          onCopyTreeItem={browser.copyTreeItem}
+          onPasteToPath={browser.pasteToPath}
+          onDeleteTreeItem={browser.deleteTreeItem}
+          onRefresh={browser.refresh}
+          onProperties={(item) => browser.showProperties(item)}
         />
 
         <main className='flex min-w-0 flex-1 flex-col'>
@@ -84,24 +89,18 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
             items={browser.contents}
             selectedIds={browser.selectedIds}
             dropTargetId={browser.dropTargetId}
-            renameTargetId={browser.renameTargetId}
             folderName={browser.currentFolder.name}
             canPaste={browser.canPaste}
+            sortState={browser.sortState}
+            onSortChange={browser.toggleSort}
             onItemClick={browser.handleItemClick}
-            onClearSelection={() => {
-              if (!browser.renameTargetId) {
-                browser.clearSelection()
-              }
-            }}
+            onClearSelection={browser.clearSelection}
             onMarqueeComplete={browser.selectFromMarquee}
             onOpen={browser.openItem}
             onCut={browser.cutItems}
             onCopy={browser.copyItems}
             onPaste={browser.pasteItems}
             onDelete={browser.deleteItems}
-            onRename={browser.startRename}
-            onRenameConfirm={browser.confirmRename}
-            onRenameCancel={browser.cancelRename}
             onSelectAll={browser.selectAll}
             onNewFolder={browser.createFolder}
             onRefresh={browser.refresh}

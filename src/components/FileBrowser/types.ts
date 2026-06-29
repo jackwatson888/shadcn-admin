@@ -1,3 +1,11 @@
+export type SortColumn = 'name' | 'dateModified' | 'size'
+export type SortDirection = 'asc' | 'desc'
+
+export type SortState = {
+  column: SortColumn
+  direction: SortDirection
+}
+
 export type ViewMode = 'grid' | 'list'
 
 export type FileIconType =

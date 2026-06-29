@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import type { FileIconType, FileSystemItem, BreadcrumbSegment } from './types'
+import type { FileIconType, FileSystemItem, BreadcrumbSegment, SortState } from './types'
 
 export function formatFileSize(bytes?: number): string {
   if (bytes === undefined) return '—'
@@ -127,6 +127,29 @@ export function compareByNameAsc(a: FileSystemItem, b: FileSystemItem): number {
   return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
 }
 
+function getModifiedTime(item: FileSystemItem): number {
+  const value = item.modified
+  if (value instanceof Date) {
+    return value.getTime()
+  }
+  return new Date(value).getTime()
+}
+
+function compareByColumn(
+  a: FileSystemItem,
+  b: FileSystemItem,
+  column: SortState['column']
+): number {
+  switch (column) {
+    case 'name':
+      return compareByNameAsc(a, b)
+    case 'dateModified':
+      return getModifiedTime(a) - getModifiedTime(b)
+    case 'size':
+      return (a.size ?? 0) - (b.size ?? 0)
+  }
+}
+
 export function getSortedFolderChildren(node: FileSystemItem): FileSystemItem[] {
   if (node.type !== 'folder' || !node.children) return []
   return node.children
@@ -134,12 +157,34 @@ export function getSortedFolderChildren(node: FileSystemItem): FileSystemItem[] 
     .sort(compareByNameAsc)
 }
 
-export function getFolderContents(node: FileSystemItem): FileSystemItem[] {
+export function getFolderChildren(node: FileSystemItem): FileSystemItem[] {
   if (node.type !== 'folder' || !node.children) return []
-  return [...node.children].sort((a, b) => {
-    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
-    return compareByNameAsc(a, b)
+  return [...node.children]
+}
+
+export function sortFolderContents(
+  items: FileSystemItem[],
+  sort: SortState
+): FileSystemItem[] {
+  return [...items].sort((a, b) => {
+    if (a.type !== b.type) {
+      return a.type === 'folder' ? -1 : 1
+    }
+
+    let result = compareByColumn(a, b, sort.column)
+    if (result === 0) {
+      result = compareByNameAsc(a, b)
+    }
+
+    return sort.direction === 'asc' ? result : -result
   })
+}
+
+export function getFolderContents(
+  node: FileSystemItem,
+  sort: SortState = { column: 'name', direction: 'asc' }
+): FileSystemItem[] {
+  return sortFolderContents(getFolderChildren(node), sort)
 }
 
 export function getBreadcrumbSegments(

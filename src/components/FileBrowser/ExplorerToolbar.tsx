@@ -1,30 +1,44 @@
 import {
+  ArrowDownAZ,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpAZ,
   ClipboardPaste,
   Copy,
   FolderPlus,
-  Pencil,
   RefreshCw,
   Scissors,
   Search,
   Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Breadcrumb } from './Breadcrumb'
-import type { BreadcrumbSegment } from './types'
+import type { BreadcrumbSegment, SortColumn, SortState } from './types'
+
+const SORT_OPTIONS: { column: SortColumn; label: string }[] = [
+  { column: 'name', label: 'Name' },
+  { column: 'dateModified', label: 'Date modified' },
+  { column: 'size', label: 'Size' },
+]
 
 type ExplorerToolbarProps = {
   breadcrumbs: BreadcrumbSegment[]
   hasSelection: boolean
-  canRename: boolean
   canGoBack: boolean
   canGoForward: boolean
   canGoUp: boolean
   canPaste: boolean
+  sortState: SortState
   onBack: () => void
   onForward: () => void
   onUp: () => void
@@ -34,8 +48,9 @@ type ExplorerToolbarProps = {
   onCopy: () => void
   onPaste: () => void
   onDelete: () => void
-  onRename: () => void
   onNewFolder: () => void
+  onSortChange: (column: SortColumn) => void
+  onSetSortDirection: (direction: SortState['direction']) => void
 }
 
 function NavButton({
@@ -67,11 +82,11 @@ function NavButton({
 export function ExplorerToolbar({
   breadcrumbs,
   hasSelection,
-  canRename,
   canGoBack,
   canGoForward,
   canGoUp,
   canPaste,
+  sortState,
   onBack,
   onForward,
   onUp,
@@ -81,8 +96,9 @@ export function ExplorerToolbar({
   onCopy,
   onPaste,
   onDelete,
-  onRename,
   onNewFolder,
+  onSortChange,
+  onSetSortDirection,
 }: ExplorerToolbarProps) {
   return (
     <div className='shrink-0 border-b bg-background'>
@@ -165,17 +181,6 @@ export function ExplorerToolbar({
           type='button'
           variant='ghost'
           size='sm'
-          className='h-7 gap-1.5 px-2 text-xs'
-          disabled={!canRename}
-          onClick={() => onRename()}
-        >
-          <Pencil className='size-3.5' />
-          Rename
-        </Button>
-        <Button
-          type='button'
-          variant='ghost'
-          size='sm'
           className='h-7 gap-1.5 px-2 text-xs text-destructive hover:text-destructive'
           disabled={!hasSelection}
           onClick={onDelete}
@@ -193,6 +198,50 @@ export function ExplorerToolbar({
           <FolderPlus className='size-3.5' />
           New folder
         </Button>
+
+        <div className='ms-auto'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='h-7 gap-1.5 px-2 text-xs'
+              >
+                {sortState.direction === 'asc' ? (
+                  <ArrowUpAZ className='size-3.5' />
+                ) : (
+                  <ArrowDownAZ className='size-3.5' />
+                )}
+                Sort
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end' className='min-w-44'>
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.column}
+                  onSelect={() => onSortChange(option.column)}
+                >
+                  {option.label}
+                  {sortState.column === option.column
+                    ? sortState.direction === 'asc'
+                      ? ' ↑'
+                      : ' ↓'
+                    : ''}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => onSetSortDirection('asc')}>
+                Ascending
+                {sortState.direction === 'asc' ? ' ✓' : ''}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onSetSortDirection('desc')}>
+                Descending
+                {sortState.direction === 'desc' ? ' ✓' : ''}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   )

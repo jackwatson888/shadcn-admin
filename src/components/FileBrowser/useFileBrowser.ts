@@ -9,7 +9,6 @@ import {
   createPastedItem,
   moveItemsBetweenFolders,
   removeItemsFromFolder,
-  renameItemInFolder,
 } from './fileOperations'
 import { useSelection } from './useSelection'
 import {
@@ -20,7 +19,7 @@ import {
   pathsEqual,
   resolveActionTargets,
 } from './utils'
-import type { ClipboardEntry, FileSystemItem } from './types'
+import type { ClipboardEntry, FileSystemItem, SortColumn, SortState } from './types'
 
 type UseFileBrowserOptions = {
   root: FileSystemItem
@@ -43,8 +42,11 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     index: 0,
   })
   const [clipboard, setClipboard] = useState<ClipboardEntry | null>(null)
-  const [renameTargetId, setRenameTargetId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+  const [sortState, setSortState] = useState<SortState>({
+    column: 'name',
+    direction: 'asc',
+  })
 
   const currentFolder = useMemo(
     () => getNodeByPath(fileTree, currentPath) ?? fileTree,
@@ -52,9 +54,25 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
   )
 
   const contents = useMemo(
-    () => getFolderContents(currentFolder),
-    [currentFolder]
+    () => getFolderContents(currentFolder, sortState),
+    [currentFolder, sortState]
   )
+
+  const toggleSort = useCallback((column: SortColumn) => {
+    setSortState((prev) =>
+      prev.column === column
+        ? { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { column, direction: 'asc' }
+    )
+  }, [])
+
+  const setSort = useCallback((column: SortColumn, direction: SortState['direction']) => {
+    setSortState({ column, direction })
+  }, [])
+
+  const setSortDirection = useCallback((direction: SortState['direction']) => {
+    setSortState((prev) => ({ ...prev, direction }))
+  }, [])
 
   const selection = useSelection(contents)
 
@@ -267,69 +285,96 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     [clipboard, currentPath, getActionTargets, selection]
   )
 
-  const startRename = useCallback(
-    (item?: FileSystemItem) => {
-      const selected = selectionRef.current.selectedItems
-      const target = item ?? selected[0]
+  const pasteToPath = useCallback(
+    (targetPath: string[]) => {
+      if (!clipboard) return
 
-      if (!target) {
-        toast.error('Select an item to rename')
+      if (
+        clipboard.mode === 'cut' &&
+        pathsEqual(clipboard.sourceFolderPath, targetPath)
+      ) {
+        toast.error('Cannot move items into the same folder')
         return
       }
 
-      if (!item && selected.length > 1) {
-        toast.error('Select only one item to rename')
-        return
-      }
+      const targetFolder = getNodeByPath(fileTree, targetPath)
+      if (!targetFolder || targetFolder.type !== 'folder') return
 
-      selection.setSelection([target.id])
-      setRenameTargetId(target.id)
-
-      requestAnimationFrame(() => {
-        document
-          .querySelector<HTMLElement>(`[data-file-item="${target.id}"]`)
-          ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      let existingNames = (targetFolder.children ?? []).map((item) => item.name)
+      const pastedItems = clipboard.items.map((item) => {
+        const pasted =
+          clipboard.mode === 'copy'
+            ? createPastedItem(item, existingNames)
+            : createMovedItem(item, existingNames)
+        existingNames = [...existingNames, pasted.name]
+        return pasted
       })
-    },
-    [selection]
-  )
 
-  const confirmRename = useCallback(
-    (newName: string) => {
-      if (!renameTargetId) return
+      setFileTree((prev) => {
+        let next = prev
+        if (clipboard.mode === 'cut') {
+          next = removeItemsFromFolder(
+            next,
+            clipboard.sourceFolderPath,
+            clipboard.items.map((item) => item.id)
+          )
+        }
+        return addItemsToFolder(next, targetPath, pastedItems)
+      })
 
-      const trimmed = newName.trim()
-      if (!trimmed) {
-        setRenameTargetId(null)
-        return
+      if (clipboard.mode === 'cut') {
+        setClipboard(null)
       }
 
-      const duplicate = contents.some(
-        (item) => item.id !== renameTargetId && item.name === trimmed
+      toast.success(
+        clipboard.mode === 'cut'
+          ? `Moved ${pastedItems.length} item(s)`
+          : `Pasted ${pastedItems.length} item(s)`
       )
-      if (duplicate) {
-        toast.error('An item with this name already exists')
-        return
-      }
-
-      setFileTree((prev) =>
-        renameItemInFolder(prev, currentPath, renameTargetId, trimmed)
-      )
-      setRenameTargetId(null)
-      toast.success(`Renamed to "${trimmed}"`)
     },
-    [contents, currentPath, renameTargetId]
+    [clipboard, fileTree]
   )
 
-  const cancelRename = useCallback(() => {
-    setRenameTargetId(null)
+  const cutTreeItem = useCallback((item: FileSystemItem, parentPath: string[]) => {
+    setClipboard({
+      mode: 'cut',
+      items: [cloneFileSystemItem(item)],
+      sourceFolderPath: parentPath,
+    })
+    toast.message(`Cut "${item.name}"`)
   }, [])
+
+  const copyTreeItem = useCallback((item: FileSystemItem, parentPath: string[]) => {
+    setClipboard({
+      mode: 'copy',
+      items: [cloneFileSystemItem(item)],
+      sourceFolderPath: parentPath,
+    })
+    toast.message(`Copied "${item.name}"`)
+  }, [])
+
+  const deleteTreeItem = useCallback(
+    (item: FileSystemItem, parentPath: string[]) => {
+      setFileTree((prev) => removeItemsFromFolder(prev, parentPath, [item.id]))
+
+      if (clipboard?.items.some((entry) => entry.id === item.id)) {
+        setClipboard(null)
+      }
+
+      if (currentPath.includes(item.id)) {
+        navigateTo(parentPath)
+      }
+
+      selection.clearSelection()
+      toast.success(`Deleted "${item.name}"`)
+    },
+    [clipboard, currentPath, navigateTo, selection]
+  )
 
   const createFolder = useCallback(() => {
     const folder = createNewFolder(contents.map((item) => item.name))
     setFileTree((prev) => addItemsToFolder(prev, currentPath, [folder]))
     selection.setSelection([folder.id])
-    setRenameTargetId(folder.id)
     toast.message('Created new folder')
   }, [contents, currentPath, selection])
 
@@ -443,15 +488,8 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
       } else if (key === 'delete' && selectionRef.current.hasSelection) {
         event.preventDefault()
         deleteItems()
-      } else if (key === 'f2' && selectionRef.current.selectedItems.length === 1) {
-        event.preventDefault()
-        startRename()
       } else if (key === 'escape') {
-        if (renameTargetId) {
-          cancelRename()
-        } else {
-          selection.clearSelection()
-        }
+        selection.clearSelection()
       }
     }
 
@@ -464,9 +502,6 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     deleteItems,
     pasteItems,
     selection,
-    startRename,
-    renameTargetId,
-    cancelRename,
   ])
 
   return {
@@ -481,13 +516,16 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     isAllSelected: selection.isAllSelected,
     expandedIds,
     clipboard,
-    renameTargetId,
     dropTargetId,
     setDropTargetId,
     canGoBack,
     canGoForward,
     canGoUp,
     canPaste,
+    sortState,
+    toggleSort,
+    setSort,
+    setSortDirection,
     navigateTo,
     goBack,
     goForward,
@@ -503,10 +541,11 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     cutItems,
     copyItems,
     pasteItems,
+    pasteToPath,
     deleteItems,
-    startRename,
-    confirmRename,
-    cancelRename,
+    cutTreeItem,
+    copyTreeItem,
+    deleteTreeItem,
     createFolder,
     showProperties,
     dropItemsOnFolder,
