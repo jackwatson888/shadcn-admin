@@ -7,6 +7,7 @@ type ExplorerSidebarProps = {
   currentPath: string[]
   expandedIds: Set<string>
   dropTargetId: string | null
+  renameTargetId: string | null
   canPaste: boolean
   onToggleExpand: (id: string) => void
   onNavigate: (path: string[]) => void
@@ -17,6 +18,9 @@ type ExplorerSidebarProps = {
   onCopyTreeItem: (item: FileSystemItem, parentPath: string[]) => void
   onPasteToPath: (path: string[]) => void
   onDeleteTreeItem: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameFromTree: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameConfirm: (name: string) => void
+  onRenameCancel: () => void
   onRefresh: () => void
   onProperties: (item?: FileSystemItem) => void
 }
@@ -26,6 +30,7 @@ export function ExplorerSidebar({
   currentPath,
   expandedIds,
   dropTargetId,
+  renameTargetId,
   canPaste,
   onToggleExpand,
   onNavigate,
@@ -36,6 +41,9 @@ export function ExplorerSidebar({
   onCopyTreeItem,
   onPasteToPath,
   onDeleteTreeItem,
+  onRenameFromTree,
+  onRenameConfirm,
+  onRenameCancel,
   onRefresh,
   onProperties,
 }: ExplorerSidebarProps) {
@@ -53,6 +61,7 @@ export function ExplorerSidebar({
             currentPath={currentPath}
             expandedIds={expandedIds}
             dropTargetId={dropTargetId}
+            renameTargetId={renameTargetId}
             canPaste={canPaste}
             onToggleExpand={onToggleExpand}
             onNavigate={onNavigate}
@@ -63,6 +72,9 @@ export function ExplorerSidebar({
             onCopyTreeItem={onCopyTreeItem}
             onPasteToPath={onPasteToPath}
             onDeleteTreeItem={onDeleteTreeItem}
+            onRenameFromTree={onRenameFromTree}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
             onRefresh={onRefresh}
             onProperties={onProperties}
           />

@@ -6,6 +6,7 @@ import {
   CollapsibleContent,
 } from '@/components/ui/collapsible'
 import { FolderNavContextMenu, NavAreaContextMenu } from './ExplorerContextMenu'
+import { InlineRenameField } from './InlineRenameField'
 import { getSortedFolderChildren, pathsEqual } from './utils'
 import type { FileSystemItem } from './types'
 
@@ -16,6 +17,7 @@ type FolderTreeProps = {
   currentPath: string[]
   expandedIds: Set<string>
   dropTargetId: string | null
+  renameTargetId: string | null
   canPaste: boolean
   onToggleExpand: (id: string) => void
   onNavigate: (path: string[]) => void
@@ -26,6 +28,9 @@ type FolderTreeProps = {
   onCopyTreeItem: (item: FileSystemItem, parentPath: string[]) => void
   onPasteToPath: (path: string[]) => void
   onDeleteTreeItem: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameFromTree: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameConfirm: (name: string) => void
+  onRenameCancel: () => void
   onRefresh: () => void
   onProperties: (item?: FileSystemItem) => void
 }
@@ -37,6 +42,7 @@ type FolderTreeNodeProps = {
   currentPath: string[]
   expandedIds: Set<string>
   dropTargetId: string | null
+  renameTargetId: string | null
   onToggleExpand: (id: string) => void
   onNavigate: (path: string[]) => void
   onFolderDragOver: (folderId: string) => void
@@ -49,6 +55,9 @@ type FolderTreeNodeProps = {
   onCopyTreeItem: (item: FileSystemItem, parentPath: string[]) => void
   onPasteToPath: (path: string[]) => void
   onDeleteTreeItem: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameFromTree: (item: FileSystemItem, parentPath: string[]) => void
+  onRenameConfirm: (name: string) => void
+  onRenameCancel: () => void
   onProperties: (item?: FileSystemItem) => void
 }
 
@@ -59,6 +68,7 @@ function FolderTreeNode({
   currentPath,
   expandedIds,
   dropTargetId,
+  renameTargetId,
   onToggleExpand,
   onNavigate,
   onFolderDragOver,
@@ -71,6 +81,9 @@ function FolderTreeNode({
   onCopyTreeItem,
   onPasteToPath,
   onDeleteTreeItem,
+  onRenameFromTree,
+  onRenameConfirm,
+  onRenameCancel,
   onProperties,
 }: FolderTreeNodeProps) {
   if (item.type !== 'folder') return null
@@ -79,6 +92,7 @@ function FolderTreeNode({
   const isExpanded = expandedIds.has(item.id)
   const isSelected = pathsEqual(currentPath, path)
   const isDropTarget = dropTargetId === item.id
+  const isRenaming = renameTargetId === item.id
   const hasChildFolders = childFolders.length > 0
 
   const rowClass = cn(
@@ -90,11 +104,13 @@ function FolderTreeNode({
   )
 
   const handleRowClick = (event: React.MouseEvent) => {
+    if (isRenaming) return
     if (event.detail > 1) return
     scheduleNavigate(() => onNavigate(path))
   }
 
   const handleRowDoubleClick = (event: React.MouseEvent) => {
+    if (isRenaming) return
     event.preventDefault()
     event.stopPropagation()
     cancelScheduledNavigate()
@@ -133,6 +149,7 @@ function FolderTreeNode({
         onCopy={onCopyTreeItem}
         onPaste={onPasteToPath}
         onDelete={onDeleteTreeItem}
+        onRename={onRenameFromTree}
         onProperties={onProperties}
       >
         <div
@@ -143,6 +160,7 @@ function FolderTreeNode({
           <div
             role='button'
             tabIndex={0}
+            data-tree-folder={item.id}
             className={cn('flex items-center outline-none', rowClass)}
             style={{ paddingInlineStart: `${depth * 16 + 4}px` }}
             onClick={handleRowClick}
@@ -183,7 +201,15 @@ function FolderTreeNode({
               <span className='size-5 shrink-0' aria-hidden='true' />
             )}
             <Folder className='size-4 shrink-0 text-amber-500' aria-hidden='true' />
-            <span className='truncate'>{item.name}</span>
+            {isRenaming ? (
+              <InlineRenameField
+                item={item}
+                onConfirm={onRenameConfirm}
+                onCancel={onRenameCancel}
+              />
+            ) : (
+              <span className='truncate'>{item.name}</span>
+            )}
           </div>
           {hasChildFolders && (
             <CollapsibleContent className='FolderTreeContent'>
@@ -197,6 +223,7 @@ function FolderTreeNode({
                     currentPath={currentPath}
                     expandedIds={expandedIds}
                     dropTargetId={dropTargetId}
+                    renameTargetId={renameTargetId}
                     onToggleExpand={onToggleExpand}
                     onNavigate={onNavigate}
                     onFolderDragOver={onFolderDragOver}
@@ -209,6 +236,9 @@ function FolderTreeNode({
                     onCopyTreeItem={onCopyTreeItem}
                     onPasteToPath={onPasteToPath}
                     onDeleteTreeItem={onDeleteTreeItem}
+                    onRenameFromTree={onRenameFromTree}
+                    onRenameConfirm={onRenameConfirm}
+                    onRenameCancel={onRenameCancel}
                     onProperties={onProperties}
                   />
                 ))}
@@ -226,6 +256,7 @@ export function FolderTree({
   currentPath,
   expandedIds,
   dropTargetId,
+  renameTargetId,
   canPaste,
   onToggleExpand,
   onNavigate,
@@ -236,6 +267,9 @@ export function FolderTree({
   onCopyTreeItem,
   onPasteToPath,
   onDeleteTreeItem,
+  onRenameFromTree,
+  onRenameConfirm,
+  onRenameCancel,
   onRefresh,
   onProperties,
 }: FolderTreeProps) {
@@ -302,6 +336,7 @@ export function FolderTree({
             currentPath={currentPath}
             expandedIds={expandedIds}
             dropTargetId={dropTargetId}
+            renameTargetId={renameTargetId}
             onToggleExpand={onToggleExpand}
             onNavigate={onNavigate}
             onFolderDragOver={onFolderDragOver}
@@ -314,6 +349,9 @@ export function FolderTree({
             onCopyTreeItem={onCopyTreeItem}
             onPasteToPath={onPasteToPath}
             onDeleteTreeItem={onDeleteTreeItem}
+            onRenameFromTree={onRenameFromTree}
+            onRenameConfirm={onRenameConfirm}
+            onRenameCancel={onRenameCancel}
             onProperties={onProperties}
           />
         ))}

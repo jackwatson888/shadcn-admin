@@ -7,6 +7,7 @@ import {
   FolderOpen,
   FolderPlus,
   Info,
+  Pencil,
   RefreshCw,
   Scissors,
   Trash2,
@@ -117,6 +118,7 @@ type FolderNavContextMenuProps = {
   onCopy: (item: FileSystemItem, parentPath: string[]) => void
   onPaste: (path: string[]) => void
   onDelete: (item: FileSystemItem, parentPath: string[]) => void
+  onRename: (item: FileSystemItem, parentPath: string[]) => void
   onProperties: (item: FileSystemItem) => void
 }
 
@@ -134,6 +136,7 @@ export function FolderNavContextMenu({
   onCopy,
   onPaste,
   onDelete,
+  onRename,
   onProperties,
 }: FolderNavContextMenuProps) {
   return (
@@ -173,6 +176,12 @@ export function FolderNavContextMenu({
         >
           <Trash2 />
           Delete
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onSelect={() => onRename(folder, parentPath)}>
+          <Pencil />
+          Rename
+          <ContextMenuShortcut>F2</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={() => onProperties(folder)}>

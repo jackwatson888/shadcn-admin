@@ -60,6 +60,7 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
           currentPath={browser.currentPath}
           expandedIds={browser.expandedIds}
           dropTargetId={browser.dropTargetId}
+          renameTargetId={browser.renameTargetId}
           canPaste={browser.canPaste}
           onToggleExpand={browser.toggleExpand}
           onNavigate={browser.navigateToTreeFolder}
@@ -80,6 +81,9 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
           onCopyTreeItem={browser.copyTreeItem}
           onPasteToPath={browser.pasteToPath}
           onDeleteTreeItem={browser.deleteTreeItem}
+          onRenameFromTree={browser.startRenameFromTree}
+          onRenameConfirm={browser.confirmRename}
+          onRenameCancel={browser.cancelRename}
           onRefresh={browser.refresh}
           onProperties={(item) => browser.showProperties(item)}
         />

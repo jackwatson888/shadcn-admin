@@ -9,6 +9,7 @@ import {
   createPastedItem,
   moveItemsBetweenFolders,
   removeItemsFromFolder,
+  renameItemInFolder,
 } from './fileOperations'
 import { useSelection } from './useSelection'
 import {
@@ -42,6 +43,8 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     index: 0,
   })
   const [clipboard, setClipboard] = useState<ClipboardEntry | null>(null)
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null)
+  const [renameParentPath, setRenameParentPath] = useState<string[] | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [sortState, setSortState] = useState<SortState>({
     column: 'name',
@@ -378,6 +381,60 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     toast.message('Created new folder')
   }, [contents, currentPath, selection])
 
+  const startRenameFromTree = useCallback(
+    (item: FileSystemItem, parentPath: string[]) => {
+      setRenameParentPath(parentPath)
+      setRenameTargetId(item.id)
+      setExpandedIds((prev) => {
+        const next = new Set(prev)
+        parentPath.forEach((id) => next.add(id))
+        return next
+      })
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(`[data-tree-folder="${item.id}"]`)
+          ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      })
+    },
+    []
+  )
+
+  const confirmRename = useCallback(
+    (newName: string) => {
+      if (!renameTargetId) return
+
+      const trimmed = newName.trim()
+      if (!trimmed) {
+        setRenameTargetId(null)
+        return
+      }
+
+      const parentPath = renameParentPath ?? currentPath
+      const parentFolder = getNodeByPath(fileTree, parentPath) ?? fileTree
+      const siblings = parentFolder.children ?? []
+      const duplicate = siblings.some(
+        (item) => item.id !== renameTargetId && item.name === trimmed
+      )
+      if (duplicate) {
+        toast.error('An item with this name already exists')
+        return
+      }
+
+      setFileTree((prev) =>
+        renameItemInFolder(prev, parentPath, renameTargetId, trimmed)
+      )
+      setRenameTargetId(null)
+      setRenameParentPath(null)
+      toast.success(`Renamed to "${trimmed}"`)
+    },
+    [currentPath, fileTree, renameParentPath, renameTargetId]
+  )
+
+  const cancelRename = useCallback(() => {
+    setRenameTargetId(null)
+    setRenameParentPath(null)
+  }, [])
+
   const showProperties = useCallback(
     (item?: FileSystemItem) => {
       const targets = item
@@ -489,7 +546,11 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
         event.preventDefault()
         deleteItems()
       } else if (key === 'escape') {
-        selection.clearSelection()
+        if (renameTargetId) {
+          cancelRename()
+        } else {
+          selection.clearSelection()
+        }
       }
     }
 
@@ -502,6 +563,8 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     deleteItems,
     pasteItems,
     selection,
+    renameTargetId,
+    cancelRename,
   ])
 
   return {
@@ -516,6 +579,7 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     isAllSelected: selection.isAllSelected,
     expandedIds,
     clipboard,
+    renameTargetId,
     dropTargetId,
     setDropTargetId,
     canGoBack,
@@ -546,6 +610,9 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     cutTreeItem,
     copyTreeItem,
     deleteTreeItem,
+    startRenameFromTree,
+    confirmRename,
+    cancelRename,
     createFolder,
     showProperties,
     dropItemsOnFolder,
