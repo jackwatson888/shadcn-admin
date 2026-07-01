@@ -112,6 +112,16 @@ export function createUniqueItemId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
+export function assignFreshIds(item: FileSystemItem): FileSystemItem {
+  const next: FileSystemItem = {
+    ...item,
+    id: createUniqueItemId(item.id),
+    modified: new Date(item.modified),
+    children: item.children?.map(assignFreshIds),
+  }
+  return next
+}
+
 export function createMovedItem(
   item: FileSystemItem,
   existingNames: string[]
@@ -131,7 +141,7 @@ export function createPastedItem(
   item: FileSystemItem,
   existingNames: string[]
 ): FileSystemItem {
-  const clone = cloneFileSystemItem(item)
+  const clone = assignFreshIds(item)
   const baseName = item.name.replace(/ - Copy( \(\d+\))?$/, '')
   let nextName = `${baseName} - Copy`
   let counter = 2
@@ -141,14 +151,11 @@ export function createPastedItem(
     counter += 1
   }
 
-  const newId = createUniqueItemId(item.id)
-
   if (clone.type === 'file' && clone.extension) {
     const ext = clone.extension
     const nameWithoutExt = nextName.replace(new RegExp(`\\.${ext}$`, 'i'), '')
     return {
       ...clone,
-      id: newId,
       name: `${nameWithoutExt}.${ext}`,
       modified: new Date(),
     }
@@ -156,7 +163,6 @@ export function createPastedItem(
 
   return {
     ...clone,
-    id: newId,
     name: nextName,
     modified: new Date(),
   }

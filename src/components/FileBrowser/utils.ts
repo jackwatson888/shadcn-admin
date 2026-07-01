@@ -187,14 +187,61 @@ export function getFolderContents(
   return sortFolderContents(getFolderChildren(node), sort)
 }
 
+export function isValidFolderPath(root: FileSystemItem, path: string[]): boolean {
+  return getNodeByPath(root, path) !== null
+}
+
+export function findFolderPathById(
+  root: FileSystemItem,
+  folderId: string,
+  ancestorPath: string[] = []
+): string[] | null {
+  const current =
+    ancestorPath.length === 0 ? root : getNodeByPath(root, ancestorPath)
+  if (!current?.children) return null
+
+  for (const child of current.children) {
+    if (child.type !== 'folder') continue
+    const childPath = [...ancestorPath, child.id]
+    if (child.id === folderId) return childPath
+    const found = findFolderPathById(root, folderId, childPath)
+    if (found) return found
+  }
+
+  return null
+}
+
+/** Returns a path that exists in the tree, repairing stale segments after moves. */
+export function resolveFolderPath(root: FileSystemItem, path: string[]): string[] {
+  if (path.length === 0) return []
+  if (isValidFolderPath(root, path)) return [...path]
+
+  const longestValid: string[] = []
+  for (let i = 0; i < path.length; i++) {
+    const prefix = path.slice(0, i + 1)
+    if (isValidFolderPath(root, prefix)) {
+      longestValid.push(path[i])
+    } else {
+      break
+    }
+  }
+
+  const targetId = path[path.length - 1]
+  const resolved = findFolderPathById(root, targetId)
+  if (resolved) return resolved
+
+  return longestValid
+}
+
 export function getBreadcrumbSegments(
   root: FileSystemItem,
   path: string[]
 ): BreadcrumbSegment[] {
+  const resolvedPath = resolveFolderPath(root, path)
   const segments: BreadcrumbSegment[] = [{ id: '', label: root.name }]
   let current = root
 
-  for (const id of path) {
+  for (const id of resolvedPath) {
     const child = current.children?.find((item) => item.id === id)
     if (!child) break
     segments.push({ id, label: child.name })
@@ -202,6 +249,10 @@ export function getBreadcrumbSegments(
   }
 
   return segments
+}
+
+export function formatAddressPath(segments: BreadcrumbSegment[]): string {
+  return segments.map((segment) => segment.label).join('\\')
 }
 
 export function pathsEqual(a: string[], b: string[]): boolean {

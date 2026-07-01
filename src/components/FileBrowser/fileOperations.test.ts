@@ -78,6 +78,15 @@ describe('createPastedItem', () => {
     expect(pasted.name).toBe('Report.pdf - Copy.pdf')
     expect(pasted.id).not.toBe(file.id)
   })
+
+  it('assigns fresh ids throughout a pasted folder tree', () => {
+    const folder = makeFolder('react', 'React', '2026-01-01', [
+      makeFile('child', 'App.tsx', 'tsx', 1, '2026-01-01'),
+    ])
+    const pasted = createPastedItem(folder, [])
+    expect(pasted.id).not.toBe(folder.id)
+    expect(pasted.children?.[0]?.id).not.toBe('child')
+  })
 })
 
 describe('createMovedItem', () => {

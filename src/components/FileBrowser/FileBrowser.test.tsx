@@ -91,6 +91,13 @@ describe('FileBrowser', () => {
 
     it('jumps to a breadcrumb ancestor', async () => {
       const screen = await renderExplorer(['projects', 'react'])
+      await expect
+        .element(screen.getByRole('button', { name: 'Projects', exact: true }))
+        .toBeInTheDocument()
+      await expect
+        .element(screen.getByRole('button', { name: 'React', exact: true }))
+        .toBeInTheDocument()
+
       await userEvent.click(
         screen.getByRole('button', { name: 'Projects', exact: true })
       )
@@ -98,6 +105,35 @@ describe('FileBrowser', () => {
         .element(statusBar(screen).getByText('Projects', { exact: true }))
         .toBeInTheDocument()
       await expect.element(treeFolder(screen, 'react')).toBeInTheDocument()
+    })
+
+    it('shows the correct breadcrumb for Projects > React', async () => {
+      const screen = await renderExplorer()
+      await openFolderInTree(screen, 'projects')
+      await openFolderInTree(screen, 'react')
+
+      await expect
+        .element(screen.getByRole('button', { name: 'Desktop', exact: true }))
+        .toBeInTheDocument()
+      await expect
+        .element(screen.getByRole('button', { name: 'Projects', exact: true }))
+        .toBeInTheDocument()
+      await expect
+        .element(screen.getByRole('button', { name: 'React', exact: true }))
+        .toBeInTheDocument()
+      await expect
+        .element(screen.getByRole('button', { name: 'NextJS', exact: true }))
+        .not.toBeInTheDocument()
+    })
+
+    it('shows a copyable path string when the address bar is clicked', async () => {
+      const screen = await renderExplorer(['projects', 'react'])
+      await userEvent.click(screen.getByRole('navigation', { name: 'Address bar' }))
+
+      const pathField = screen.getByRole('textbox', { name: 'Folder path' })
+      await expect.element(pathField).toBeInTheDocument()
+      await expect.element(pathField).toHaveValue('Desktop\\Projects\\React')
+      await expect.element(pathField).toHaveAttribute('readOnly')
     })
   })
 

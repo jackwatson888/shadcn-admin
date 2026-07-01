@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { ChevronRight, Folder } from 'lucide-react'
+import { ChevronRight, Folder, FolderOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Collapsible,
@@ -11,6 +11,16 @@ import { getSortedFolderChildren, pathsEqual } from './utils'
 import type { FileSystemItem } from './types'
 
 const SINGLE_CLICK_DELAY_MS = 250
+
+function TreeFolderIcon({ open }: { open: boolean }) {
+  const Icon = open ? FolderOpen : Folder
+  return (
+    <Icon
+      className='size-4 shrink-0 text-amber-500 fill-amber-400/80'
+      aria-hidden='true'
+    />
+  )
+}
 
 type FolderTreeProps = {
   root: FileSystemItem
@@ -115,7 +125,7 @@ function FolderTreeNode({
     event.stopPropagation()
     cancelScheduledNavigate()
 
-  const wasExpanded = isExpanded
+    const wasExpanded = isExpanded
     onNavigate(path)
     if (hasChildFolders && wasExpanded) {
       onToggleExpand(item.id)
@@ -203,7 +213,7 @@ function FolderTreeNode({
             ) : (
               <span className='size-5 shrink-0' aria-hidden='true' />
             )}
-            <Folder className='size-4 shrink-0 text-amber-500' aria-hidden='true' />
+            <TreeFolderIcon open={isExpanded || isSelected} />
             {isRenaming ? (
               <InlineRenameField
                 item={item}
@@ -277,23 +287,36 @@ export function FolderTree({
   onProperties,
 }: FolderTreeProps) {
   const singleClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const navigationGenerationRef = useRef(0)
 
   const scheduleNavigate = useCallback((action: () => void) => {
     if (singleClickTimerRef.current) {
       clearTimeout(singleClickTimerRef.current)
     }
+    const generation = ++navigationGenerationRef.current
     singleClickTimerRef.current = setTimeout(() => {
-      action()
+      if (generation === navigationGenerationRef.current) {
+        action()
+      }
       singleClickTimerRef.current = null
     }, SINGLE_CLICK_DELAY_MS)
   }, [])
 
   const cancelScheduledNavigate = useCallback(() => {
+    navigationGenerationRef.current += 1
     if (singleClickTimerRef.current) {
       clearTimeout(singleClickTimerRef.current)
       singleClickTimerRef.current = null
     }
   }, [])
+
+  const handleNavigate = useCallback(
+    (path: string[]) => {
+      cancelScheduledNavigate()
+      onNavigate(path)
+    },
+    [cancelScheduledNavigate, onNavigate]
+  )
 
   const rootFolders = getSortedFolderChildren(root)
 
@@ -301,7 +324,7 @@ export function FolderTree({
     <NavAreaContextMenu
       folderPath={[]}
       canPaste={canPaste}
-      onOpen={onNavigate}
+      onOpen={handleNavigate}
       onPaste={onPasteToPath}
       onRefresh={onRefresh}
       onProperties={onProperties}
@@ -310,7 +333,7 @@ export function FolderTree({
         <button
           type='button'
           data-testid='tree-desktop'
-          onClick={() => onNavigate([])}
+          onClick={() => handleNavigate([])}
           onDragOver={(event) => {
             event.preventDefault()
             onFolderDragOver('desktop')
@@ -328,7 +351,7 @@ export function FolderTree({
             dropTargetId === 'desktop' && 'ring-1 ring-[#0078d4]'
           )}
         >
-          <Folder className='size-4 shrink-0 text-amber-500' aria-hidden='true' />
+          <TreeFolderIcon open={currentPath.length === 0} />
           <span className='truncate'>{root.name}</span>
         </button>
         {rootFolders.map((folder) => (
@@ -342,7 +365,7 @@ export function FolderTree({
             dropTargetId={dropTargetId}
             renameTargetId={renameTargetId}
             onToggleExpand={onToggleExpand}
-            onNavigate={onNavigate}
+            onNavigate={handleNavigate}
             onFolderDragOver={onFolderDragOver}
             onFolderDragLeave={onFolderDragLeave}
             onFolderDrop={onFolderDrop}

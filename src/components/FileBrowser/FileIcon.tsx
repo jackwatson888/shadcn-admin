@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   FileText,
   Folder,
+  FolderOpen,
   Image,
   Presentation,
   Video,
@@ -87,6 +88,7 @@ const iconConfig: Record<
 type FileIconProps = {
   type: FileIconType
   size?: 'sm' | 'md' | 'lg'
+  open?: boolean
   className?: string
 }
 
@@ -96,13 +98,19 @@ const sizeMap = {
   lg: 'size-12',
 }
 
-export function FileIcon({ type, size = 'md', className }: FileIconProps) {
+export function FileIcon({ type, size = 'md', open = false, className }: FileIconProps) {
   const config = iconConfig[type]
-  const Icon = config.icon
+  const Icon = type === 'folder' && open ? FolderOpen : config.icon
 
   return (
     <Icon
-      className={cn(sizeMap[size], config.className, className)}
+      className={cn(
+        sizeMap[size],
+        type === 'folder' && open
+          ? 'text-amber-500 fill-amber-400/80'
+          : config.className,
+        className
+      )}
       aria-hidden='true'
     />
   )

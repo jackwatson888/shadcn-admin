@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   compareByNameAsc,
+  findFolderPathById,
+  formatAddressPath,
   formatFileSize,
   formatModifiedDate,
   getBreadcrumbSegments,
@@ -12,6 +14,7 @@ import {
   getSortedFolderChildren,
   pathsEqual,
   resolveActionTargets,
+  resolveFolderPath,
   sortFolderContents,
 } from './utils'
 import { makeFile, makeFolder } from './test-utils'
@@ -136,6 +139,48 @@ describe('getBreadcrumbSegments', () => {
       { id: '', label: 'Desktop' },
       { id: 'alpha', label: 'Alpha' },
     ])
+  })
+})
+
+describe('formatAddressPath', () => {
+  it('joins breadcrumb labels with backslashes', () => {
+    expect(formatAddressPath([{ id: '', label: 'Desktop' }])).toBe('Desktop')
+    expect(
+      formatAddressPath([
+        { id: '', label: 'Desktop' },
+        { id: 'projects', label: 'Projects' },
+        { id: 'react', label: 'React' },
+      ])
+    ).toBe('Desktop\\Projects\\React')
+  })
+})
+
+describe('resolveFolderPath', () => {
+  it('finds a moved folder by id when the stored path is stale', () => {
+    const moved = makeFolder('desktop', 'Desktop', '2026-06-01', [
+      makeFolder('projects', 'Projects', '2026-06-02', [
+        makeFolder('nextjs', 'NextJS', '2026-06-03', [
+          makeFolder('react', 'React', '2026-06-04', []),
+        ]),
+      ]),
+    ])
+
+    expect(resolveFolderPath(moved, ['projects', 'react'])).toEqual([
+      'projects',
+      'nextjs',
+      'react',
+    ])
+    expect(getBreadcrumbSegments(moved, ['projects', 'react'])).toEqual([
+      { id: '', label: 'Desktop' },
+      { id: 'projects', label: 'Projects' },
+      { id: 'nextjs', label: 'NextJS' },
+      { id: 'react', label: 'React' },
+    ])
+  })
+
+  it('looks up a folder path by id', () => {
+    expect(findFolderPathById(root, 'alpha')).toEqual(['alpha'])
+    expect(findFolderPathById(root, 'missing')).toBeNull()
   })
 })
 

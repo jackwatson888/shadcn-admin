@@ -13,12 +13,14 @@ import {
 } from './fileOperations'
 import { useSelection } from './useSelection'
 import {
+  findFolderPathById,
   getBreadcrumbSegments,
   getFolderContents,
   getNodeByPath,
   getParentPath,
   pathsEqual,
   resolveActionTargets,
+  resolveFolderPath,
 } from './utils'
 import type { ClipboardEntry, FileSystemItem, SortColumn, SortState } from './types'
 
@@ -89,10 +91,21 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     return resolveActionTargets(items, current.selectedItems, current.selectedIds)
   }, [])
 
-  const breadcrumbs = useMemo(
-    () => getBreadcrumbSegments(fileTree, currentPath),
+  const resolvedPath = useMemo(
+    () => resolveFolderPath(fileTree, currentPath),
     [fileTree, currentPath]
   )
+
+  const breadcrumbs = useMemo(
+    () => getBreadcrumbSegments(fileTree, resolvedPath),
+    [fileTree, resolvedPath]
+  )
+
+  useEffect(() => {
+    if (!pathsEqual(resolvedPath, currentPath)) {
+      setCurrentPath(resolvedPath)
+    }
+  }, [currentPath, resolvedPath])
 
   const canGoBack = navHistory.index > 0
   const canGoForward = navHistory.index < navHistory.paths.length - 1
@@ -101,27 +114,28 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
 
   const navigateTo = useCallback(
     (path: string[]) => {
-      const folder = getNodeByPath(fileTree, path)
+      const nextPath = resolveFolderPath(fileTree, path)
+      const folder = getNodeByPath(fileTree, nextPath)
       if (!folder) return
 
-      setCurrentPath(path)
+      setCurrentPath(nextPath)
       selection.clearSelection()
 
       setExpandedIds((prev) => {
         const next = new Set(prev)
         next.add('desktop')
-        path.forEach((id) => next.add(id))
+        nextPath.forEach((id) => next.add(id))
         return next
       })
 
       setNavHistory((prev) => {
         const trimmed = prev.paths.slice(0, prev.index + 1)
         const last = trimmed[trimmed.length - 1]
-        if (last && pathsEqual(last, path)) {
+        if (last && pathsEqual(last, nextPath)) {
           return prev
         }
         return {
-          paths: [...trimmed, path],
+          paths: [...trimmed, [...nextPath]],
           index: trimmed.length,
         }
       })
@@ -162,12 +176,18 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
   const openItem = useCallback(
     (item: FileSystemItem) => {
       if (item.type === 'folder') {
-        navigateTo([...currentPath, item.id])
+        const parent = getNodeByPath(fileTree, currentPath) ?? fileTree
+        const isDirectChild = parent.children?.some((child) => child.id === item.id)
+        navigateTo(
+          isDirectChild
+            ? [...currentPath, item.id]
+            : (findFolderPathById(fileTree, item.id) ?? [...currentPath, item.id])
+        )
       } else {
         toast.message(`Opening ${item.name}`)
       }
     },
-    [currentPath, navigateTo]
+    [currentPath, fileTree, navigateTo]
   )
 
   const toggleExpand = useCallback((id: string) => {
