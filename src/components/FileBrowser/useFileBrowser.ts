@@ -15,6 +15,7 @@ import { useSelection } from './useSelection'
 import {
   findFolderPathById,
   getBreadcrumbSegments,
+  getExpandedIdsForPath,
   getFolderContents,
   getNodeByPath,
   getParentPath,
@@ -38,7 +39,7 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
   const [fileTree, setFileTree] = useState<FileSystemItem>(() => cloneFileTree(root))
   const [currentPath, setCurrentPath] = useState<string[]>(initialPath)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(['desktop', ...initialPath])
+    () => getExpandedIdsForPath(initialPath)
   )
   const [navHistory, setNavHistory] = useState<NavigationHistory>({
     paths: [initialPath],
@@ -121,12 +122,7 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
       setCurrentPath(nextPath)
       selection.clearSelection()
 
-      setExpandedIds((prev) => {
-        const next = new Set(prev)
-        next.add('desktop')
-        nextPath.forEach((id) => next.add(id))
-        return next
-      })
+      setExpandedIds(getExpandedIdsForPath(nextPath))
 
       setNavHistory((prev) => {
         const trimmed = prev.paths.slice(0, prev.index + 1)
@@ -147,7 +143,9 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     setNavHistory((prev) => {
       if (prev.index <= 0) return prev
       const newIndex = prev.index - 1
-      setCurrentPath(prev.paths[newIndex])
+      const newPath = prev.paths[newIndex]
+      setCurrentPath(newPath)
+      setExpandedIds(getExpandedIdsForPath(newPath))
       selection.clearSelection()
       return { ...prev, index: newIndex }
     })
@@ -157,7 +155,9 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     setNavHistory((prev) => {
       if (prev.index >= prev.paths.length - 1) return prev
       const newIndex = prev.index + 1
-      setCurrentPath(prev.paths[newIndex])
+      const newPath = prev.paths[newIndex]
+      setCurrentPath(newPath)
+      setExpandedIds(getExpandedIdsForPath(newPath))
       selection.clearSelection()
       return { ...prev, index: newIndex }
     })
@@ -405,11 +405,7 @@ export function useFileBrowser({ root, initialPath = [] }: UseFileBrowserOptions
     (item: FileSystemItem, parentPath: string[]) => {
       setRenameParentPath(parentPath)
       setRenameTargetId(item.id)
-      setExpandedIds((prev) => {
-        const next = new Set(prev)
-        parentPath.forEach((id) => next.add(id))
-        return next
-      })
+      setExpandedIds(getExpandedIdsForPath(parentPath))
       requestAnimationFrame(() => {
         document
           .querySelector<HTMLElement>(`[data-tree-folder="${item.id}"]`)

@@ -6,6 +6,7 @@ import {
   formatFileSize,
   formatModifiedDate,
   getBreadcrumbSegments,
+  getExpandedIdsForPath,
   getFileIconFromExtension,
   getFileTypeLabel,
   getFolderContents,
@@ -181,6 +182,15 @@ describe('resolveFolderPath', () => {
   it('looks up a folder path by id', () => {
     expect(findFolderPathById(root, 'alpha')).toEqual(['alpha'])
     expect(findFolderPathById(root, 'missing')).toBeNull()
+  })
+})
+
+describe('getExpandedIdsForPath', () => {
+  it('keeps only the desktop root and folders along the current path', () => {
+    expect(getExpandedIdsForPath([])).toEqual(new Set(['desktop']))
+    expect(getExpandedIdsForPath(['downloads', 'images'])).toEqual(
+      new Set(['desktop', 'downloads', 'images'])
+    )
   })
 })
 

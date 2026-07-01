@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { userEvent } from 'vitest/browser'
-import { renderExplorer, statusBar, treeFolder } from './test-utils'
+import { openFolderInTree, renderExplorer, selectFolderInTree, statusBar, treeFolder } from './test-utils'
 
 describe('FolderTree', () => {
   it('double-click expands subfolders and opens the folder', async () => {
@@ -80,6 +80,25 @@ describe('FolderTree', () => {
     await userEvent.click(treeFolder(screen, 'projects'))
     await expect
       .element(statusBar(screen).getByText('Projects', { exact: true }))
+      .toBeInTheDocument()
+  })
+
+  it('collapses other branches when a nested folder is selected', async () => {
+    const screen = await renderExplorer()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Expand Projects', exact: true })
+    )
+    await expect.element(treeFolder(screen, 'react')).toBeInTheDocument()
+
+    await openFolderInTree(screen, 'downloads')
+    await selectFolderInTree(screen, 'images')
+
+    await expect.element(treeFolder(screen, 'images')).toBeInTheDocument()
+    await expect.element(treeFolder(screen, 'react')).not.toBeInTheDocument()
+    await expect.element(treeFolder(screen, 'api')).not.toBeInTheDocument()
+    await expect
+      .element(statusBar(screen).getByText('Images', { exact: true }))
       .toBeInTheDocument()
   })
 

@@ -264,6 +264,10 @@ export function getParentPath(path: string[]): string[] {
   return path.slice(0, -1)
 }
 
+export function getExpandedIdsForPath(path: string[]): Set<string> {
+  return new Set(['desktop', ...path])
+}
+
 export function resolveActionTargets(
   explicitItems: FileSystemItem[] | undefined,
   selectedItems: FileSystemItem[],

@@ -51,6 +51,12 @@ export async function openFolderInTree(screen: RenderResult, folderId: string) {
   await userEvent.dblClick(treeFolder(screen, folderId))
 }
 
+/** Single-click tree navigation waits for the double-click discrimination delay. */
+export async function selectFolderInTree(screen: RenderResult, folderId: string) {
+  await userEvent.click(treeFolder(screen, folderId))
+  await new Promise((resolve) => setTimeout(resolve, 300))
+}
+
 export async function openFolderInDetails(
   screen: RenderResult,
   folderId: string
