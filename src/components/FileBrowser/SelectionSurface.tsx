@@ -24,6 +24,7 @@ export function SelectionSurface({
   return (
     <div
       ref={containerRef}
+      data-testid='file-list-surface'
       className={cn(
         'relative min-h-full flex-1 overflow-auto select-none',
         'bg-[#ffffff] dark:bg-[#1e1e1e]',

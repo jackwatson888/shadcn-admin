@@ -115,7 +115,9 @@ function FolderTreeNode({
     event.stopPropagation()
     cancelScheduledNavigate()
 
-    if (hasChildFolders) {
+  const wasExpanded = isExpanded
+    onNavigate(path)
+    if (hasChildFolders && wasExpanded) {
       onToggleExpand(item.id)
     }
   }
@@ -161,6 +163,7 @@ function FolderTreeNode({
             role='button'
             tabIndex={0}
             data-tree-folder={item.id}
+            data-testid={`tree-folder-${item.id}`}
             className={cn('flex items-center outline-none', rowClass)}
             style={{ paddingInlineStart: `${depth * 16 + 4}px` }}
             onClick={handleRowClick}
@@ -306,6 +309,7 @@ export function FolderTree({
       <div className='space-y-0.5' role='tree' aria-label='Folder navigation'>
         <button
           type='button'
+          data-testid='tree-desktop'
           onClick={() => onNavigate([])}
           onDragOver={(event) => {
             event.preventDefault()

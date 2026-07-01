@@ -122,6 +122,7 @@ export function FileItem({
     <ItemContextMenu {...menuProps}>
       <div
         data-file-item={item.id}
+        data-testid={`file-item-${item.id}`}
         role='button'
         tabIndex={0}
         onClick={handleClick}

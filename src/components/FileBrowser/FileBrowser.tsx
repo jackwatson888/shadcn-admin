@@ -30,6 +30,7 @@ export function FileBrowser({ root, initialPath, className }: FileBrowserProps) 
         className
       )}
       style={{ fontFamily: WIN_EXPLORER.font }}
+      data-testid='file-browser-root'
       tabIndex={-1}
     >
       <ExplorerToolbar
